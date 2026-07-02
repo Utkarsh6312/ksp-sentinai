@@ -1,0 +1,95 @@
+{
+  "GravityOffence": [
+    { "GravityOffenceID": 1, "LookupValue": "Heinous" },
+    { "GravityOffenceID": 2, "LookupValue": "Non-Heinous" }
+  ],
+  "CaseCategory": [
+    { "CaseCategoryID": 1, "LookupValue": "FIR" },
+    { "CaseCategoryID": 2, "LookupValue": "UDR" },
+    { "CaseCategoryID": 3, "LookupValue": "Zero FIR" }
+  ],
+  "CrimeHead": [
+    { "CrimeHeadID": 1, "CrimeGroupName": "Crimes Against Body" },
+    { "CrimeHeadID": 2, "CrimeGroupName": "Property Crimes" },
+    { "CrimeHeadID": 3, "CrimeGroupName": "Cyber Crimes" },
+    { "CrimeHeadID": 4, "CrimeGroupName": "Economic Offences" }
+  ],
+  "Unit": [
+    { "UnitID": 101, "UnitName": "Bengaluru Central PS", "DistrictID": 1 },
+    { "UnitID": 102, "UnitName": "Mysuru South PS", "DistrictID": 2 },
+    { "UnitID": 103, "UnitName": "Hubballi North PS", "DistrictID": 3 },
+    { "UnitID": 104, "UnitName": "Mangaluru Coastal PS", "DistrictID": 4 }
+  ],
+  "CaseMaster": [
+    {
+      "CaseMasterID": 1001,
+      "CrimeNo": "101010101202600001",
+      "CrimeRegisteredDate": "2026-06-15",
+      "PoliceStationID": 101,
+      "CaseCategoryID": 1,
+      "GravityOffenceID": 1,
+      "CrimeMajorHeadID": 1,
+      "CaseStatusID": 1,
+      "IncidentFromDate": "2026-06-14T22:30:00",
+      "latitude": 12.9716,
+      "longitude": 77.5946,
+      "BriefFacts": "Assault and attempt to murder reported near Brigade Road."
+    },
+    {
+      "CaseMasterID": 1002,
+      "CrimeNo": "101010101202600002",
+      "CrimeRegisteredDate": "2026-06-20",
+      "PoliceStationID": 102,
+      "CaseCategoryID": 1,
+      "GravityOffenceID": 2,
+      "CrimeMajorHeadID": 2,
+      "CaseStatusID": 2,
+      "IncidentFromDate": "2026-06-19T14:15:00",
+      "latitude": 12.2958,
+      "longitude": 76.6394,
+      "BriefFacts": "Burglary reported in a residential area in Mysuru South."
+    },
+    {
+      "CaseMasterID": 1003,
+      "CrimeNo": "101010101202600003",
+      "CrimeRegisteredDate": "2026-07-01",
+      "PoliceStationID": 101,
+      "CaseCategoryID": 1,
+      "GravityOffenceID": 1,
+      "CrimeMajorHeadID": 1,
+      "CaseStatusID": 1,
+      "IncidentFromDate": "2026-07-01T02:00:00",
+      "latitude": 12.9516,
+      "longitude": 77.5846,
+      "BriefFacts": "Armed robbery at an ATM in Central Bengaluru."
+    },
+    {
+      "CaseMasterID": 1004,
+      "CrimeNo": "101010101202600004",
+      "CrimeRegisteredDate": "2026-07-02",
+      "PoliceStationID": 103,
+      "CaseCategoryID": 1,
+      "GravityOffenceID": 2,
+      "CrimeMajorHeadID": 3,
+      "CaseStatusID": 1,
+      "IncidentFromDate": "2026-07-01T10:00:00",
+      "latitude": 15.3647,
+      "longitude": 75.1240,
+      "BriefFacts": "Cyber fraud involving bank account takeover."
+    }
+  ],
+  "Accused": [
+    { "AccusedMasterID": 501, "CaseMasterID": 1001, "AccusedName": "Ramesh K.", "AgeYear": 32, "GenderID": 1 },
+    { "AccusedMasterID": 502, "CaseMasterID": 1001, "AccusedName": "Suresh T.", "AgeYear": 28, "GenderID": 1 },
+    { "AccusedMasterID": 503, "CaseMasterID": 1003, "AccusedName": "Ramesh K.", "AgeYear": 32, "GenderID": 1 }
+  ],
+  "Victim": [
+    { "VictimMasterID": 701, "CaseMasterID": 1001, "VictimName": "Anand P.", "AgeYear": 45, "GenderID": 1 },
+    { "VictimMasterID": 702, "CaseMasterID": 1002, "VictimName": "Meena S.", "AgeYear": 38, "GenderID": 2 },
+    { "VictimMasterID": 703, "CaseMasterID": 1004, "VictimName": "Prakash H.", "AgeYear": 55, "GenderID": 1 }
+  ],
+  "ArrestSurrender": [
+    { "ArrestSurrenderID": 901, "CaseMasterID": 1001, "AccusedMasterID": 501, "ArrestSurrenderDate": "2026-06-16", "PoliceStationID": 101 },
+    { "ArrestSurrenderID": 902, "CaseMasterID": 1001, "AccusedMasterID": 502, "ArrestSurrenderDate": "2026-06-17", "PoliceStationID": 101 }
+  ]
+}
