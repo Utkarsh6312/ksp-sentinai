@@ -1,124 +1,120 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, MessageSquareText, Network, Shield, Settings, X, Moon, Sun } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  MessageSquareText, 
+  BarChart3, 
+  MapPin, 
+  Network, 
+  Users, 
+  BellRing, 
+  FileText, 
+  Settings, 
+  Shield, 
+  LogOut
+} from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-const Sidebar = ({ isOpen, setIsOpen, theme, toggleTheme }) => {
+const Sidebar = ({ isOpen, setIsOpen }) => {
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const menuItems = [
+    { name: 'Command Centre', path: '/', icon: <LayoutDashboard className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'AI Chatbot', path: '/ai-copilot', icon: <MessageSquareText className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Dashboard', path: '/dashboard', icon: <BarChart3 className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Crime Analytics', path: '/analytics', icon: <BarChart3 className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Hotspot Map', path: '/hotspots', icon: <MapPin className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Suspect Network', path: '/network', icon: <Network className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Recent Offenders', path: '/offenders', icon: <Users className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Alerts & Notifications', path: '/alerts', icon: <BellRing className="w-5 h-5" />, badge: 7, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Reports', path: '/reports', icon: <FileText className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+  ];
+
+  const visibleMenuItems = menuItems.filter(item => item.roles.includes(currentUser?.role || 'Analyst'));
+
   return (
     <>
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="md:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 transition-opacity"
+          className="md:hidden fixed inset-0 bg-[#0b1120]/80 backdrop-blur-sm z-40"
           onClick={() => setIsOpen(false)}
         ></div>
       )}
 
       {/* Sidebar Container */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-white/95 dark:bg-ksp-navy/95 backdrop-blur-xl border-r border-slate-200 dark:border-slate-800/60 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.05)] dark:shadow-[4px_0_24px_rgba(0,0,0,0.5)] 
+        fixed inset-y-0 left-0 z-50 w-64 bg-[#0b1120] border-r border-[#1e293b] flex flex-col 
         transform transition-transform duration-300 ease-in-out
         md:relative md:translate-x-0
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="p-6 md:p-8 flex items-center justify-between border-b border-slate-200 dark:border-slate-800/50">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-ksp-gold/20 blur-md rounded-full"></div>
-              <Shield className="text-ksp-gold w-8 h-8 md:w-10 md:h-10 relative z-10" />
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-wider">Sentin<span className="text-ksp-gold drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">AI</span></h1>
-              <p className="text-[10px] md:text-[11px] text-ksp-blue dark:text-ksp-blueLight uppercase tracking-widest font-semibold mt-0.5">KSP Command Center</p>
-            </div>
+        {/* Logo Section */}
+        <div className="p-6 flex items-center space-x-3 border-b border-[#1e293b]">
+          <Shield className="text-ksp-gold w-8 h-8 flex-shrink-0" />
+          <div>
+            <h1 className="text-xl font-bold text-white tracking-wide flex items-center">
+              Sentin<span className="text-ksp-gold">AI</span>
+            </h1>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">KSP COMMAND CENTER</p>
           </div>
-          <button 
-            className="md:hidden text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-lg bg-slate-100 dark:bg-slate-800/50"
-            onClick={() => setIsOpen(false)}
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
         
-        <div className="px-6 py-4 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-          Main Menu
-        </div>
-
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-          <NavLink to="/" onClick={() => setIsOpen(false)} className={({isActive}) => `group flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-300 relative overflow-hidden ${isActive ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'}`}>
-            {({isActive}) => (
-              <>
-                {isActive && <div className="absolute inset-0 bg-gradient-to-r from-ksp-blue/10 dark:from-ksp-blue/20 to-transparent border-l-2 border-ksp-blue"></div>}
-                {!isActive && <div className="absolute inset-0 bg-slate-100/0 hover:bg-slate-100 dark:bg-slate-800/0 dark:group-hover:bg-slate-800/40 transition-colors"></div>}
-                <LayoutDashboard className={`w-5 h-5 relative z-10 transition-colors ${isActive ? 'text-ksp-blue' : 'group-hover:text-ksp-blue'}`} />
-                <span className="relative z-10">Command Center</span>
-              </>
-            )}
-          </NavLink>
-          
-          <NavLink to="/ai-copilot" onClick={() => setIsOpen(false)} className={({isActive}) => `group flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-300 relative overflow-hidden ${isActive ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'}`}>
-            {({isActive}) => (
-              <>
-                {isActive && <div className="absolute inset-0 bg-gradient-to-r from-ksp-gold/10 dark:from-ksp-gold/20 to-transparent border-l-2 border-ksp-gold"></div>}
-                {!isActive && <div className="absolute inset-0 bg-slate-100/0 hover:bg-slate-100 dark:bg-slate-800/0 dark:group-hover:bg-slate-800/40 transition-colors"></div>}
-                <MessageSquareText className={`w-5 h-5 relative z-10 transition-colors ${isActive ? 'text-ksp-gold' : 'group-hover:text-ksp-gold'}`} />
-                <span className="relative z-10">AI Co-Pilot</span>
-              </>
-            )}
-          </NavLink>
-          
-          <NavLink to="/network" onClick={() => setIsOpen(false)} className={({isActive}) => `group flex items-center space-x-3 px-4 py-3.5 rounded-xl transition-all duration-300 relative overflow-hidden ${isActive ? 'text-slate-900 dark:text-white font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'}`}>
-            {({isActive}) => (
-              <>
-                {isActive && <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 dark:from-emerald-500/20 to-transparent border-l-2 border-emerald-500"></div>}
-                {!isActive && <div className="absolute inset-0 bg-slate-100/0 hover:bg-slate-100 dark:bg-slate-800/0 dark:group-hover:bg-slate-800/40 transition-colors"></div>}
-                <Network className={`w-5 h-5 relative z-10 transition-colors ${isActive ? 'text-emerald-500 dark:text-emerald-400' : 'group-hover:text-emerald-500 dark:group-hover:text-emerald-300'}`} />
-                <span className="relative z-10">Suspect Network</span>
-              </>
-            )}
-          </NavLink>
+        {/* Navigation */}
+        <nav className="flex-1 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-[#1e293b]">
+          <div className="space-y-1 px-3">
+            {visibleMenuItems.map((item) => (
+              <NavLink 
+                key={item.name}
+                to={item.path} 
+                onClick={() => setIsOpen(false)} 
+                className={({isActive}) => `
+                  sidebar-link group flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200
+                  ${isActive 
+                    ? 'sidebar-link-active bg-[#1e293b] text-white' 
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1e293b]/50'}
+                `}
+              >
+                {({isActive}) => (
+                  <div className="flex items-center space-x-3">
+                    <div className={`${isActive ? 'text-blue-500' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                      {item.icon}
+                    </div>
+                    <span className={`text-sm font-medium ${isActive ? 'font-semibold' : ''}`}>
+                      {item.name}
+                    </span>
+                  </div>
+                )}
+              </NavLink>
+            ))}
+          </div>
         </nav>
         
-        {/* System Status */}
-        <div className="px-6 mb-4 mt-auto">
-          <div className="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700/50 shadow-inner">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Catalyst Sync</p>
-              <div className="flex items-center space-x-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse-slow shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-                <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">Live</span>
-              </div>
-            </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mb-1 overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 dark:from-emerald-600 dark:to-emerald-400 h-1.5 rounded-full w-full"></div>
-            </div>
-          </div>
-        </div>
-
         {/* User Profile */}
-        <div className="p-4 md:p-6 border-t border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-900/30">
-          <div className="flex items-center justify-between">
+        <div className="p-4 border-t border-[#1e293b] bg-[#0b1120]">
+          <div className="flex items-center justify-between p-2 rounded-lg">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-ksp-blue to-ksp-navy border border-slate-300 dark:border-slate-600 flex items-center justify-center overflow-hidden">
-                <img src="https://i.pravatar.cc/150?u=a042581f4e29026704d" alt="Inspector" className="w-full h-full object-cover" />
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full bg-[#1e293b] overflow-hidden border border-slate-700 flex items-center justify-center text-[#a855f7] font-bold">
+                  {currentUser?.name?.charAt(0) || 'U'}
+                </div>
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0b1120] rounded-full"></div>
               </div>
               <div>
-                <p className="text-sm font-semibold text-slate-900 dark:text-white">Insp. Raj Kumar</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Cyber Cell</p>
+                <p className="text-sm font-bold text-white truncate max-w-[100px]">{currentUser?.name || 'Unknown User'}</p>
+                <p className="text-[10px] text-slate-400 font-medium tracking-wide uppercase">{currentUser?.role || 'Role'}</p>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-1">
-              <button 
-                onClick={toggleTheme}
-                className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800"
-                title="Toggle Theme"
-              >
-                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              </button>
-              <button className="text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors p-1.5 rounded-md hover:bg-slate-200 dark:hover:bg-slate-800" title="Settings">
-                <Settings className="w-4 h-4" />
-              </button>
-            </div>
+            <button onClick={handleLogout} className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors" title="Logout">
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>

@@ -1,5 +1,9 @@
 {
   "client": {
-    "source": "client"
+    "source": "dist"
+  },
+  "functions": {
+    "source": "functions",
+    "targets": ["sentinai_api"]
   }
 }

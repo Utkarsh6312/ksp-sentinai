@@ -13,6 +13,7 @@ export default {
       colors: {
         ksp: {
           navy: '#0b1120',
+          panel: '#131c2f',
           dark: '#020617',
           gold: '#f59e0b',
           goldLight: '#fcd34d',
@@ -20,6 +21,8 @@ export default {
           crimsonLight: '#fb7185',
           blue: '#3b82f6',
           blueLight: '#60a5fa',
+          green: '#10b981',
+          purple: '#8b5cf6'
         }
       },
       animation: {

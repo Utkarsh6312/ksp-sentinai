@@ -5,4 +5,13 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  server: {
+    proxy: {
+      '/catalyst-api': {
+        target: 'https://ksp-sentinai-60076496338.development.catalystserverless.in',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/catalyst-api/, '')
+      }
+    }
+  }
 })

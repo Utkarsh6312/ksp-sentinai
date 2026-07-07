@@ -79,9 +79,11 @@
     }
   ],
   "Accused": [
-    { "AccusedMasterID": 501, "CaseMasterID": 1001, "AccusedName": "Ramesh K.", "AgeYear": 32, "GenderID": 1 },
-    { "AccusedMasterID": 502, "CaseMasterID": 1001, "AccusedName": "Suresh T.", "AgeYear": 28, "GenderID": 1 },
-    { "AccusedMasterID": 503, "CaseMasterID": 1003, "AccusedName": "Ramesh K.", "AgeYear": 32, "GenderID": 1 }
+    { "AccusedMasterID": 501, "CaseMasterID": 1001, "AccusedName": "Ramesh K.", "AgeYear": 32, "GenderID": 1, "ModusOperandi": "Armed Assault", "PriorArrests": 2 },
+    { "AccusedMasterID": 502, "CaseMasterID": 1001, "AccusedName": "Suresh T.", "AgeYear": 28, "GenderID": 1, "ModusOperandi": "Accomplice/Driver", "PriorArrests": 0 },
+    { "AccusedMasterID": 503, "CaseMasterID": 1003, "AccusedName": "Ramesh K.", "AgeYear": 32, "GenderID": 1, "ModusOperandi": "Armed Assault", "PriorArrests": 2 },
+    { "AccusedMasterID": 504, "CaseMasterID": 1002, "AccusedName": "Kiran M.", "AgeYear": 25, "GenderID": 1, "ModusOperandi": "House Break-in (Night)", "PriorArrests": 4 },
+    { "AccusedMasterID": 505, "CaseMasterID": 1002, "AccusedName": "Naveen P.", "AgeYear": 26, "GenderID": 1, "ModusOperandi": "House Break-in (Night)", "PriorArrests": 3 }
   ],
   "Victim": [
     { "VictimMasterID": 701, "CaseMasterID": 1001, "VictimName": "Anand P.", "AgeYear": 45, "GenderID": 1 },
@@ -91,5 +93,24 @@
   "ArrestSurrender": [
     { "ArrestSurrenderID": 901, "CaseMasterID": 1001, "AccusedMasterID": 501, "ArrestSurrenderDate": "2026-06-16", "PoliceStationID": 101 },
     { "ArrestSurrenderID": 902, "CaseMasterID": 1001, "AccusedMasterID": 502, "ArrestSurrenderDate": "2026-06-17", "PoliceStationID": 101 }
+  ],
+  "PredictiveForecasts": [
+    { "month": "Aug", "historical": 120, "forecast": 125, "upperBound": 135, "lowerBound": 115 },
+    { "month": "Sep", "historical": 135, "forecast": 140, "upperBound": 155, "lowerBound": 125 },
+    { "month": "Oct", "historical": 110, "forecast": 115, "upperBound": 125, "lowerBound": 105 },
+    { "month": "Nov", "historical": 0, "forecast": 150, "upperBound": 170, "lowerBound": 130 },
+    { "month": "Dec", "historical": 0, "forecast": 165, "upperBound": 190, "lowerBound": 140 },
+    { "month": "Jan", "historical": 0, "forecast": 130, "upperBound": 150, "lowerBound": 110 }
+  ],
+  "Anomalies": [
+    { "id": 1, "title": "Spike in Vehicle Thefts", "description": "300% increase in 2-wheeler thefts in East Zone over the last 48 hours.", "severity": "High", "date": "2026-07-04" },
+    { "id": 2, "title": "Unusual Cyber Activity", "description": "Multiple phishing FIRs reported originating from the same IP block.", "severity": "Medium", "date": "2026-07-02" }
+  ],
+  "SocioEconomicFactors": [
+    { "region": "Zone A", "unemploymentRate": 4.5, "crimeRate": 3.2, "populationDensity": 5000 },
+    { "region": "Zone B", "unemploymentRate": 6.8, "crimeRate": 5.7, "populationDensity": 8500 },
+    { "region": "Zone C", "unemploymentRate": 3.2, "crimeRate": 2.1, "populationDensity": 3000 },
+    { "region": "Zone D", "unemploymentRate": 8.1, "crimeRate": 7.5, "populationDensity": 12000 },
+    { "region": "Zone E", "unemploymentRate": 5.5, "crimeRate": 4.0, "populationDensity": 6000 }
   ]
 }
