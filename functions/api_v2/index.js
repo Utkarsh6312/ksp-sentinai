@@ -10,11 +10,8 @@ app.use(cors());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'sentinai-secret-key-12345';
 
-// Create a router that will handle all routes
-const router = express.Router();
-
 // Simulated Zoho Catalyst Advanced I/O function for Natural Language to ZCQL
-router.post('/api/copilot/query', async (req, res) => {
+app.post('/api/copilot/query', async (req, res) => {
   try {
     const { prompt } = req.body;
     let query = "";
@@ -37,9 +34,9 @@ router.post('/api/copilot/query', async (req, res) => {
 });
 
 // Authentication endpoints using Zoho Catalyst Data Store
-async function authRegister(req, res) {
+app.post('/auth/register', async (req, res) => {
   try {
-    const { username, password, name, role, division, email } = req.body;
+    const { username, password, name, role, division } = req.body;
     
     // Initialize Catalyst App
     const catalystApp = catalyst.initialize(req);
@@ -64,10 +61,9 @@ async function authRegister(req, res) {
       username: username,
       password: hashedPassword,
       name: name,
-      email: email || '',
       role: role || 'Investigator',
       division: division || 'General',
-      approval_status: req.body.forceApprove ? 'approved' : 'pending'
+      approval_status: 'pending'
     });
 
     const row = await insertPromise;
@@ -77,9 +73,9 @@ async function authRegister(req, res) {
     console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
-}
+});
 
-async function authLogin(req, res) {
+app.post('/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
     
@@ -115,7 +111,6 @@ async function authLogin(req, res) {
       id: userRow.ROWID,
       username: userRow.username,
       name: userRow.name,
-      email: userRow.email,
       role: userRow.role,
       division: userRow.division
     };
@@ -131,9 +126,10 @@ async function authLogin(req, res) {
     console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
-}
+});
 
-async function authPending(req, res) {
+// --- User Approval Endpoints ---
+app.get('/auth/pending', async (req, res) => {
   try {
     const catalystApp = catalyst.initialize(req);
     const zcql = catalystApp.zcql();
@@ -143,7 +139,6 @@ async function authPending(req, res) {
       id: u.Users.ROWID,
       username: u.Users.username,
       name: u.Users.name,
-      email: u.Users.email,
       role: u.Users.role,
       division: u.Users.division,
       approval_status: u.Users.approval_status
@@ -154,35 +149,11 @@ async function authPending(req, res) {
     console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
-}
+});
 
-async function authAllUsers(req, res) {
+app.put('/auth/approve/:id', async (req, res) => {
   try {
-    const catalystApp = catalyst.initialize(req);
-    const zcql = catalystApp.zcql();
-    // Fetch all approved users
-    const users = await zcql.executeZCQLQuery(`SELECT * FROM Users WHERE approval_status = 'approved'`);
-    
-    const formattedUsers = users.map(u => ({
-      id: u.Users.ROWID,
-      username: u.Users.username,
-      name: u.Users.name,
-      email: u.Users.email,
-      role: u.Users.role,
-      division: u.Users.division,
-      approval_status: u.Users.approval_status
-    }));
-    
-    res.status(200).json({ success: true, data: formattedUsers });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
-async function authApprove(req, res) {
-  try {
-    const id = req.query.id;
+    const { id } = req.params;
     const catalystApp = catalyst.initialize(req);
     const datastore = catalystApp.datastore();
     const table = datastore.table('Users');
@@ -197,11 +168,11 @@ async function authApprove(req, res) {
     console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
-}
+});
 
-async function authReject(req, res) {
+app.delete('/auth/reject/:id', async (req, res) => {
   try {
-    const id = req.query.id;
+    const { id } = req.params;
     const catalystApp = catalyst.initialize(req);
     const datastore = catalystApp.datastore();
     const table = datastore.table('Users');
@@ -213,84 +184,26 @@ async function authReject(req, res) {
     console.error(err);
     res.status(500).json({ success: false, error: err.message });
   }
-}
-
-async function getProfile(req, res) {
-  try {
-    const id = req.query.id;
-    const catalystApp = catalyst.initialize(req);
-    const zcql = catalystApp.zcql();
-    const users = await zcql.executeZCQLQuery(`SELECT * FROM Users WHERE ROWID = '${id}'`);
-    
-    if (!users || users.length === 0) {
-      return res.status(404).json({ success: false, error: "User not found" });
-    }
-    
-    res.status(200).json({ success: true, user: users[0].Users });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
-async function updateProfile(req, res) {
-  try {
-    const { id, firstName, lastName, phone, department, designation, profilePhoto } = req.body;
-    const catalystApp = catalyst.initialize(req);
-    const datastore = catalystApp.datastore();
-    const table = datastore.table('Users');
-    
-    await table.updateRow({
-      ROWID: id,
-      firstName: firstName || '',
-      lastName: lastName || '',
-      phone: phone || '',
-      division: department || '',
-      role: designation || '',
-      name: `${firstName || ''} ${lastName || ''}`.trim(),
-      profilePhoto: profilePhoto || ''
-    });
-    
-    res.status(200).json({ success: true, message: "Profile updated successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
+});
 
 // --- Reports Endpoints ---
 
-router.get(['/api/reports', '/reports', '/', '/api'], async (req, res) => {
+app.get('/api/reports', async (req, res) => {
   try {
-    if (req.query.route === 'dashboard') return getDashboardData(req, res);
-    if (req.query.route === 'pending_users') return authPending(req, res);
-    if (req.query.route === 'all_users') return authAllUsers(req, res);
-    if (req.query.route === 'get_profile') return getProfile(req, res);
-    if (req.query.route === 'audit_logs') return getAuditLogs(req, res);
-    
     const catalystApp = catalyst.initialize(req);
     const zcql = catalystApp.zcql();
-    const datastore = catalystApp.datastore();
-    const table = datastore.table('Reports');
+    const reports = await zcql.executeZCQLQuery(`SELECT * FROM Reports`);
     
-    let reports = [];
-    try {
-      const pagedResp = await table.getPagedRows({ maxRows: 100 });
-      reports = pagedResp.data || [];
-    } catch (e) {
-      reports = [];
-    }
-    
-    // Datastore returns [{ reportId: ..., title: ... }] directly (unlike ZCQL which nests them under Reports:)
-    const formattedReports = reports.map(report => ({
+    // ZCQL returns [{ Reports: { reportId: ..., title: ... } }]
+    const formattedReports = reports.map(r => r.Reports).map(report => ({
       id: report.reportId || report.ROWID,
-      title: report.title || 'Untitled Report',
-      category: report.category || 'Uncategorized',
-      status: report.status || 'Pending',
-      priority: report.reportPriority || 'Medium',
-      date: report.reportDate || new Date().toISOString(),
-      reporter: report.reportedBy || 'Unknown',
-      assigned: report.assignedTo || 'Unassigned'
+      title: report.title,
+      category: report.category,
+      status: report.status,
+      priority: report.reportPriority,
+      date: report.reportDate,
+      reporter: report.reportedBy,
+      assigned: report.assignedTo
     }));
     
     res.status(200).json({ success: true, data: formattedReports });
@@ -300,13 +213,7 @@ router.get(['/api/reports', '/reports', '/', '/api'], async (req, res) => {
   }
 });
 
-router.post(['/api/reports', '/reports', '/', '/api'], async (req, res) => {
-  if (req.query.route === 'seed') return seedAllDatabase(req, res);
-  if (req.query.route === 'register') return authRegister(req, res);
-  if (req.query.route === 'login') return authLogin(req, res);
-  if (req.query.route === 'update_profile') return updateProfile(req, res);
-  if (req.query.route === 'audit_logs') return createAuditLog(req, res);
-  
+app.post('/api/reports', async (req, res) => {
   try {
     const { reportId, title, category, status, priority, reportDate, reporter, assigned } = req.body;
     const catalystApp = catalyst.initialize(req);
@@ -327,30 +234,16 @@ router.post(['/api/reports', '/reports', '/', '/api'], async (req, res) => {
   }
 });
 
-router.put(['/api/reports/:id', '/reports/:id', '/', '/api'], async (req, res) => {
-  if (req.query.route === 'approve_user') return authApprove(req, res);
-  
+app.put('/api/reports/:id', async (req, res) => {
   try {
-    const id = req.params.id || req.query.id;
+    const { id } = req.params;
     const { status } = req.body;
     const catalystApp = catalyst.initialize(req);
-    
-    let rowIdToUpdate = id;
-    if (isNaN(id)) {
-      const zcql = catalystApp.zcql();
-      const records = await zcql.executeZCQLQuery(`SELECT * FROM Reports WHERE reportId = '${id}'`);
-      if (records.length > 0) {
-        rowIdToUpdate = records[0].Reports.ROWID;
-      } else {
-        return res.status(404).json({ success: false, error: 'Report not found' });
-      }
-    }
-
     const datastore = catalystApp.datastore();
     const table = datastore.table('Reports');
     
     const updatePromise = table.updateRow({
-      ROWID: rowIdToUpdate,
+      ROWID: id,
       status: status
     });
     
@@ -362,32 +255,14 @@ router.put(['/api/reports/:id', '/reports/:id', '/', '/api'], async (req, res) =
   }
 });
 
-router.delete(['/api/reports/:id', '/reports/:id', '/api/reports', '/reports', '/', '/api'], async (req, res) => {
-  if (req.query.route === 'audit_logs') return deleteAuditLog(req, res);
-  if (req.query.route === 'clear_audit_logs') return clearAuditLogs(req, res);
-  if (req.query.route === 'reject_user') return authReject(req, res);
-  
+app.delete('/api/reports/:id', async (req, res) => {
   try {
-    const id = req.params.id || req.query.id;
-    if (!id) return res.status(400).json({ success: false, error: 'Missing ID for deletion' });
-    
+    const { id } = req.params;
     const catalystApp = catalyst.initialize(req);
-    
-    let rowIdToDelete = id;
-    if (isNaN(id)) {
-      const zcql = catalystApp.zcql();
-      const records = await zcql.executeZCQLQuery(`SELECT * FROM Reports WHERE reportId = '${id}'`);
-      if (records.length > 0) {
-        rowIdToDelete = records[0].Reports.ROWID;
-      } else {
-        return res.status(404).json({ success: false, error: 'Report not found' });
-      }
-    }
-
     const datastore = catalystApp.datastore();
     const table = datastore.table('Reports');
     
-    const deletePromise = table.deleteRow(rowIdToDelete);
+    const deletePromise = table.deleteRow(id);
     await deletePromise;
     
     res.status(200).json({ success: true });
@@ -398,7 +273,7 @@ router.delete(['/api/reports/:id', '/reports/:id', '/api/reports', '/reports', '
 });
 
 // --- Seed Endpoint ---
-async function seedAllDatabase(req, res) {
+app.post('/api/seed-all', async (req, res) => {
   try {
     const catalystApp = catalyst.initialize(req);
     const datastore = catalystApp.datastore();
@@ -424,8 +299,7 @@ async function seedAllDatabase(req, res) {
     const fallbackReports = [
       { reportId: 'REP-2026-894', title: 'Cyber Fraud at MG Road', category: 'Cyber Crime', reportDate: '2026-05-18T14:30:00Z', reportPriority: 'High', status: 'In Progress', reportedBy: 'Ramesh Singh', assignedTo: 'Insp. Vikram' },
       { reportId: 'REP-2026-893', title: 'Vehicle Theft - Honda City', category: 'Theft', reportDate: '2026-05-18T09:15:00Z', reportPriority: 'Medium', status: 'Pending', reportedBy: 'Anita Kumar', assignedTo: 'Sub Insp. Sharma' },
-      { reportId: 'REP-2026-892', title: 'Domestic Violence Complaint', category: 'Assault', reportDate: '2026-05-17T22:45:00Z', reportPriority: 'Critical', status: 'Resolved', reportedBy: 'Anonymous', assignedTo: 'Insp. Meena' },
-      { reportId: 'REP-2026-999', title: 'Massive Organized Cyber Syndicate Operations Identified Across Southern District ATMs', category: 'Cyber Crime', reportDate: '2026-07-08T09:00:00Z', reportPriority: 'Critical', status: 'In Progress', reportedBy: 'Inspector Rajesh', assignedTo: 'DCP Cyber Cell' }
+      { reportId: 'REP-2026-892', title: 'Domestic Violence Complaint', category: 'Assault', reportDate: '2026-05-17T22:45:00Z', reportPriority: 'Critical', status: 'Resolved', reportedBy: 'Anonymous', assignedTo: 'Insp. Meena' }
     ];
     for (let row of fallbackReports) {
       await reportsTable.insertRow(row);
@@ -436,10 +310,10 @@ async function seedAllDatabase(req, res) {
     console.error("Seed error:", err);
     res.status(500).json({ success: false, error: err.message });
   }
-}
+});
 
 // --- Dashboard Data Fetch Endpoint ---
-async function getDashboardData(req, res) {
+app.get('/api/dashboard-data', async (req, res) => {
   try {
     const catalystApp = catalyst.initialize(req);
     const zcql = catalystApp.zcql();
@@ -480,89 +354,6 @@ async function getDashboardData(req, res) {
     console.error("Dashboard Data Fetch error:", err);
     res.status(500).json({ success: false, error: err.message });
   }
-}
-
-// --- Audit Logs Fetch Endpoint ---
-async function getAuditLogs(req, res) {
-  try {
-    const catalystApp = catalyst.initialize(req);
-    const zcql = catalystApp.zcql();
-    
-    const result = await zcql.executeZCQLQuery(`SELECT * FROM AuditLogs ORDER BY CREATEDTIME DESC LIMIT 50`);
-    const logs = result.map(row => row.AuditLogs);
-    
-    res.status(200).json({ success: true, data: logs });
-  } catch (err) {
-    console.error("Audit Logs Fetch error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
-async function createAuditLog(req, res) {
-  try {
-    const { logTime, userName, action, ip, status } = req.body;
-    const catalystApp = catalyst.initialize(req);
-    const datastore = catalystApp.datastore();
-    const table = datastore.table('AuditLogs');
-    
-    await table.insertRow({
-      logTime: logTime || new Date().toLocaleString(),
-      userName: userName || 'System',
-      action: action || 'Unknown Action',
-      ip: ip || 'localhost',
-      status: status || 'Success'
-    });
-    
-    res.status(201).json({ success: true });
-  } catch (err) {
-    console.error("Audit Logs Insert error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
-async function deleteAuditLog(req, res) {
-  try {
-    const { id } = req.body;
-    if (!id) return res.status(400).json({ success: false, error: "Missing log id" });
-
-    const catalystApp = catalyst.initialize(req);
-    const datastore = catalystApp.datastore();
-    const table = datastore.table('AuditLogs');
-    
-    await table.deleteRow(id);
-    
-    res.status(200).json({ success: true });
-  } catch (err) {
-    console.error("Audit Logs Delete error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
-async function clearAuditLogs(req, res) {
-  try {
-    const catalystApp = catalyst.initialize(req);
-    const zcql = catalystApp.zcql();
-    const datastore = catalystApp.datastore();
-    const table = datastore.table('AuditLogs');
-    
-    // Fetch all logs
-    const result = await zcql.executeZCQLQuery(`SELECT * FROM AuditLogs`);
-    
-    // Delete each row by ROWID
-    const promises = result.map(row => table.deleteRow(row.AuditLogs.ROWID));
-    await Promise.all(promises);
-    
-    res.status(200).json({ success: true, message: "All audit logs cleared." });
-  } catch (err) {
-    console.error("Clear Audit Logs error:", err);
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
-// Routes handled inside main /api query dispatcher
-
-// Mount the router on both the root and the default Catalyst path
-app.use('/', router);
-app.use('/server/sentinai_api', router);
+});
 
 module.exports = app;

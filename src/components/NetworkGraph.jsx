@@ -16,13 +16,18 @@ const SuspectNetwork = () => {
   const [activeModal, setActiveModal] = useState(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [selectedSuspect, setSelectedSuspect] = useState(null);
+  const [dataFactor, setDataFactor] = useState(1);
+
+  const handleDateChange = (date) => {
+    setDataFactor(0.6 + Math.random() * 0.8);
+  };
 
   const kpis = [
-    { title: 'Total Suspects', value: '1,256', change: '+ 8.6%', isUp: true, icon: <Users className="w-5 h-5 text-purple-400" />, color: 'bg-purple-500/20' },
-    { title: 'Active Networks', value: '328', change: '+ 12.3%', isUp: true, icon: <Network className="w-5 h-5 text-blue-400" />, color: 'bg-blue-500/20' },
-    { title: 'High Value Targets', value: '56', change: '+ 5.2%', isUp: true, icon: <Target className="w-5 h-5 text-rose-400" />, color: 'bg-rose-500/20' },
-    { title: 'Links Identified', value: '2,843', change: '+ 14.7%', isUp: true, icon: <Link className="w-5 h-5 text-amber-400" />, color: 'bg-amber-500/20' },
-    { title: 'New Associations', value: '184', change: '+ 9.1%', isUp: true, icon: <UserPlus className="w-5 h-5 text-emerald-400" />, color: 'bg-emerald-500/20' },
+    { title: 'Total Suspects', value: Math.floor(1256 * dataFactor).toLocaleString(), change: '+ 8.6%', isUp: true, icon: <Users className="w-5 h-5 text-purple-400" />, color: 'bg-purple-500/20' },
+    { title: 'Active Networks', value: Math.floor(328 * dataFactor).toLocaleString(), change: '+ 12.3%', isUp: true, icon: <Network className="w-5 h-5 text-blue-400" />, color: 'bg-blue-500/20' },
+    { title: 'High Value Targets', value: Math.floor(56 * dataFactor).toLocaleString(), change: '+ 5.2%', isUp: true, icon: <Target className="w-5 h-5 text-rose-400" />, color: 'bg-rose-500/20' },
+    { title: 'Links Identified', value: Math.floor(2843 * dataFactor).toLocaleString(), change: '+ 14.7%', isUp: true, icon: <Link className="w-5 h-5 text-amber-400" />, color: 'bg-amber-500/20' },
+    { title: 'New Associations', value: Math.floor(184 * dataFactor).toLocaleString(), change: '+ 9.1%', isUp: true, icon: <UserPlus className="w-5 h-5 text-emerald-400" />, color: 'bg-emerald-500/20' },
   ];
 
   const topSuspects = [
@@ -34,19 +39,19 @@ const SuspectNetwork = () => {
   ];
 
   const relationData = [
-    { name: 'Known Associates', value: 1079, color: '#3b82f6', pct: '38%' },
-    { name: 'Family / Relative', value: 625, color: '#10b981', pct: '22%' },
-    { name: 'Business / Financial', value: 512, color: '#f59e0b', pct: '18%' },
-    { name: 'Communications', value: 341, color: '#ef4444', pct: '12%' },
-    { name: 'Others', value: 286, color: '#8b5cf6', pct: '10%' },
+    { name: 'Known Associates', value: Math.floor(1079 * dataFactor), color: '#3b82f6', pct: '38%' },
+    { name: 'Family / Relative', value: Math.floor(625 * dataFactor), color: '#10b981', pct: '22%' },
+    { name: 'Business / Financial', value: Math.floor(512 * dataFactor), color: '#f59e0b', pct: '18%' },
+    { name: 'Communications', value: Math.floor(341 * dataFactor), color: '#ef4444', pct: '12%' },
+    { name: 'Others', value: Math.floor(286 * dataFactor), color: '#8b5cf6', pct: '10%' },
   ];
 
   const evolutionData = [
-    { name: '19 Apr', new: 100, dismantled: 20 },
-    { name: '26 Apr', new: 120, dismantled: 30 },
-    { name: '3 May', new: 150, dismantled: 45 },
-    { name: '10 May', new: 180, dismantled: 40 },
-    { name: '17 May', new: 220, dismantled: 60 },
+    { name: '19 Apr', new: Math.floor(100 * dataFactor), dismantled: Math.floor(20 * dataFactor) },
+    { name: '26 Apr', new: Math.floor(120 * dataFactor), dismantled: Math.floor(30 * dataFactor) },
+    { name: '3 May', new: Math.floor(150 * dataFactor), dismantled: Math.floor(45 * dataFactor) },
+    { name: '10 May', new: Math.floor(180 * dataFactor), dismantled: Math.floor(40 * dataFactor) },
+    { name: '17 May', new: Math.floor(220 * dataFactor), dismantled: Math.floor(60 * dataFactor) },
   ];
 
   const networkAlerts = [
@@ -63,7 +68,7 @@ const SuspectNetwork = () => {
 
   return (
     <div className="p-6 max-w-[1600px] mx-auto pb-12">
-      <TopBar title="Suspect Network" subtitle="Identify connections, associations and criminal linkages">
+      <TopBar title="Suspect Network" subtitle="Identify connections, associations and criminal linkages" onDateChange={handleDateChange}>
         <div className="relative">
           <button onClick={() => setShowFilterMenu(!showFilterMenu)} className="flex items-center space-x-2 bg-transparent border border-[#1e293b] text-slate-300 px-4 py-2 rounded-lg hover:bg-[#1e293b] transition-colors text-sm font-medium">
             <Filter className="w-4 h-4" />
@@ -315,7 +320,7 @@ const SuspectNetwork = () => {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-lg font-bold text-white">2,843</span>
+                  <span className="text-lg font-bold text-white">{Math.floor(2843 * dataFactor).toLocaleString()}</span>
                   <span className="text-[9px] text-slate-400 uppercase">TOTAL</span>
                 </div>
               </div>

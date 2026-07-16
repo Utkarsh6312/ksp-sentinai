@@ -4,11 +4,17 @@ import {
   ScatterChart, Scatter, ZAxis, Area, ComposedChart
 } from 'recharts';
 import { TrendingUp, AlertOctagon, BrainCircuit, Activity } from 'lucide-react';
-import mockData from '../data/mockSchema.json';
+import { useData } from '../context/DataContext';
 
 const PredictiveAnalytics = ({ theme }) => {
-  const { PredictiveForecasts, Anomalies, SocioEconomicFactors } = mockData;
+  const { data: mockData, loading } = useData();
   const [deploymentLevel, setDeploymentLevel] = useState(50);
+
+  if (loading || !mockData) {
+    return <div className="flex h-full items-center justify-center text-slate-400">Loading live database...</div>;
+  }
+
+  const { PredictiveForecasts, Anomalies, SocioEconomicFactors } = mockData;
 
   const adjustedForecasts = useMemo(() => {
     // 50 is baseline. If > 50, crime decreases. If < 50, crime increases.

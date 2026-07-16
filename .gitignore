@@ -27,3 +27,8 @@ client/
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary test scripts
+*.cjs
+test_deploy.js
+test_api.js

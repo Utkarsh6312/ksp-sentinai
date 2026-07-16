@@ -10,73 +10,203 @@ import { useReports } from '../context/ReportsContext';
 import { useAuth } from '../context/AuthContext';
 
 const Settings = () => {
+  const { currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState('Profile & Account');
   
-  const [profileData, setProfileData] = useState({
-    firstName: 'Insp. Raj',
-    lastName: 'Kumar',
-    email: 'raj.kumar@ksp.gov.in',
-    phone: '+91 98765 43210',
-    department: 'Cyber Crime Cell',
-    designation: 'Senior Inspector'
+  const [profileData, setProfileData] = useState(() => {
+    const saved = localStorage.getItem('sentinai_profile');
+    if (saved) return JSON.parse(saved);
+    return {
+      firstName: 'Insp. Raj',
+      lastName: 'Kumar',
+      email: 'raj.kumar@ksp.gov.in',
+      phone: '+91 98765 43210',
+      department: 'Cyber Crime Cell',
+      designation: 'Senior Inspector'
+    };
   });
 
   const [profilePhoto, setProfilePhoto] = useState("https://i.pravatar.cc/150?u=a042581f4e29026704d");
   const fileInputRef = useRef(null);
 
-  const [toggles, setToggles] = useState({
-    autoRefresh: true,
-    showTips: true,
-    compactView: false,
-    darkMode: true,
-    twoFactor: true
+  const [toggles, setToggles] = useState(() => {
+    const saved = localStorage.getItem('sentinai_toggles');
+    if (saved) return JSON.parse(saved);
+    return {
+      autoRefresh: true,
+      showTips: true,
+      compactView: false,
+      darkMode: true,
+      twoFactor: true
+    };
   });
 
   const [fontSize, setFontSize] = useState('Medium');
   const [animationSpeed, setAnimationSpeed] = useState(2);
 
-  const [officers, setOfficers] = useState([
-    { id: '#KSP-9921', initials: 'RK', name: 'Insp. Raj Kumar (You)', email: 'raj.kumar@ksp.gov.in', role: 'Admin', status: 'Active', color: 'blue' },
-    { id: '#KSP-8834', initials: 'RV', name: 'Ravi Varma', email: 'ravi.v@ksp.gov.in', role: 'Investigator', status: 'Active', color: 'emerald' },
-    { id: '#KSP-7712', initials: 'SM', name: 'Sneha M.', email: 'sneha@ksp.gov.in', role: 'Analyst', status: 'Offline', color: 'amber' }
-  ]);
+  const [officers, setOfficers] = useState([]);
 
-  const auditLogs = [
-    { timestamp: 'Today, 10:45 AM', user: 'Raj Kumar (Admin)', action: 'Exported Crime Trends PDF', ip: '192.168.1.45', status: 'Success' },
-    { timestamp: 'Today, 09:12 AM', user: 'System', action: 'Automated Database Backup', ip: 'localhost', status: 'Success' },
-    { timestamp: 'Yesterday, 11:30 PM', user: 'Sneha M.', action: 'Failed Login Attempt', ip: '103.22.44.11', status: 'Failed' },
-    { timestamp: 'Yesterday, 04:15 PM', user: 'Ravi Varma', action: 'Updated Suspect Record #882', ip: '192.168.1.88', status: 'Success' },
-    { timestamp: 'May 17, 10:00 AM', user: 'System', action: 'SentinAI Engine Update (v2.1.0)', ip: 'localhost', status: 'Success' },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api?route=all_users');
+        const data = await response.json();
+        if (data.success) {
+          const mappedUsers = data.data.map(u => ({
+            id: `#KSP-${u.id}`,
+            rawId: u.id,
+            initials: u.name ? u.name.substring(0, 2).toUpperCase() : 'U',
+            name: u.name || u.username,
+            email: `${u.username}@ksp.gov.in`,
+            role: u.role || 'Investigator',
+            status: 'Active',
+            color: (u.role || '').toLowerCase() === 'admin' ? 'blue' : 'emerald'
+          }));
+          setOfficers(mappedUsers);
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
-  const { reports: adminTasks, setReports: setAdminTasks } = useReports();
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetch(`/api?route=get_profile&id=${currentUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.user) {
+            setProfileData(prev => ({
+              ...prev,
+              firstName: data.user.firstName || currentUser.name?.split(' ')[0] || '',
+              lastName: data.user.lastName || currentUser.name?.split(' ').slice(1).join(' ') || '',
+              phone: data.user.phone || '',
+              email: data.user.email || currentUser.email || '',
+              department: data.user.division || currentUser.division || '',
+              designation: data.user.role || currentUser.role || ''
+            }));
+            if (data.user.profilePhoto) {
+              setProfilePhoto(data.user.profilePhoto);
+            }
+          }
+        })
+        .catch(err => console.error(err));
+    }
+  }, [currentUser]);
 
-  const handleAddAdminTask = () => {
+  const [auditLogs, setAuditLogs] = useState([]);
+
+  useEffect(() => {
+    if (activeTab === 'Audit Logs') {
+      const fetchLogs = async () => {
+        try {
+          const res = await fetch('/api?route=audit_logs');
+          if (res.ok) {
+            const json = await res.json();
+            if (json.success && json.data) {
+              setAuditLogs(json.data);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch audit logs", err);
+        }
+      };
+      fetchLogs();
+    }
+  }, [activeTab]);
+
+  const handleDeleteLog = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this audit log?')) return;
+    try {
+      const res = await fetch('/api?route=audit_logs', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      if (res.ok) {
+        setAuditLogs(prev => prev.filter(log => (log.id || log.ROWID) !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete audit log", err);
+    }
+  };
+
+  const handleClearLogs = async () => {
+    if (!window.confirm('Are you sure you want to clear ALL audit logs? This cannot be undone.')) return;
+    try {
+      const res = await fetch('/api?route=clear_audit_logs', {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        setAuditLogs([]);
+      }
+    } catch (err) {
+      console.error("Failed to clear audit logs", err);
+    }
+  };
+
+  const { reports: adminTasks, setReports: setAdminTasks, addReport, updateReportStatus, removeReport, refreshReports } = useReports();
+
+  useEffect(() => {
+    if (activeTab === 'Admin Controls' && refreshReports) {
+      refreshReports();
+    }
+  }, [activeTab]);
+
+  const logAction = async (actionText) => {
+    try {
+      await fetch('/api?route=audit_logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          logTime: new Date().toLocaleString(),
+          userName: currentUser?.name || 'System',
+          action: actionText,
+          ip: 'Client',
+          status: 'Success'
+        })
+      });
+      // Refresh audit logs if we are on that tab
+      if (activeTab === 'Audit Logs') {
+        const res = await fetch('/api?route=audit_logs');
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) setAuditLogs(json.data);
+        }
+      }
+    } catch (e) { console.error('Failed to log action', e); }
+  };
+
+  const handleAddAdminTask = async () => {
     const title = prompt("Enter task title:");
     if (!title) return;
     const category = prompt("Enter category (e.g., Compliance, HR, Database, Cyber Crime):") || 'General';
     const priority = prompt("Enter priority (High, Medium, Low):") || 'Medium';
-    setAdminTasks([...adminTasks, {
-      id: `REP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+    
+    await addReport({
       title,
       category,
       priority,
       date: new Date().toISOString(),
       status: 'Pending',
       reporter: 'Admin User',
-      assigned: 'Unassigned'
-    }]);
+      assigned: 'Unassigned',
+      location: 'N/A',
+      description: 'New admin task'
+    });
+    logAction(`Created New Admin Task: ${title}`);
   };
 
-  const handleUpdateAdminTaskStatus = (id, newStatus) => {
-    setAdminTasks(adminTasks.map(task => 
-      task.id === id ? { ...task, status: newStatus } : task
-    ));
+  const handleUpdateAdminTaskStatus = async (id, newStatus) => {
+    await updateReportStatus(id, newStatus);
+    logAction(`Updated Report ${id} to ${newStatus}`);
   };
 
-  const handleRemoveAdminTask = (id) => {
+  const handleRemoveAdminTask = async (id) => {
     if (window.confirm("Remove this report/task?")) {
-      setAdminTasks(adminTasks.filter(task => task.id !== id));
+      await removeReport(id);
+      logAction(`Deleted Report ${id}`);
     }
   };
 
@@ -131,7 +261,37 @@ const Settings = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePhoto(reader.result);
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          const MAX_WIDTH = 150;
+          const MAX_HEIGHT = 150;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Compress to low quality jpeg to save DB space
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          setProfilePhoto(dataUrl);
+        };
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     }
@@ -141,29 +301,99 @@ const Settings = () => {
     setProfilePhoto("https://via.placeholder.com/150?text=KSP");
   };
 
-  const handleAddOfficer = () => {
-    const name = prompt("Enter new officer name:");
-    if (name) {
-      const newOfficer = {
-        id: `#KSP-${Math.floor(1000 + Math.random() * 9000)}`,
-        initials: name.substring(0, 2).toUpperCase(),
-        name: name,
-        email: `${name.toLowerCase().replace(' ', '.')}@ksp.gov.in`,
-        role: 'Investigator',
-        status: 'Active',
-        color: 'purple'
-      };
-      setOfficers([...officers, newOfficer]);
+  const handleAddOfficer = async () => {
+    const username = prompt("Enter new officer username (e.g. jdoe):");
+    if (!username) return;
+    const name = prompt("Enter full name:");
+    const role = prompt("Enter role (Admin or Investigator):", "Investigator");
+    const password = prompt("Enter temporary password for the user:");
+    
+    if (username && password) {
+      try {
+        const email = `${username.toLowerCase().replace(' ', '.')}@ksp.gov.in`;
+        const response = await fetch('/api?route=register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: username,
+            name: name || username,
+            email: email,
+            password: password,
+            role: role || 'Investigator',
+            division: 'General',
+            forceApprove: true
+          })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          // Refresh the list
+          const refreshRes = await fetch('/api?route=all_users');
+          const refreshData = await refreshRes.json();
+          if (refreshData.success) {
+            const mappedUsers = refreshData.data.map(u => ({
+              id: `#KSP-${u.id}`,
+              rawId: u.id,
+              initials: u.name ? u.name.substring(0, 2).toUpperCase() : 'U',
+              name: u.name || u.username,
+              email: `${u.username}@ksp.gov.in`,
+              role: u.role || 'Investigator',
+              status: 'Active',
+              color: (u.role || '').toLowerCase() === 'admin' ? 'blue' : 'emerald'
+            }));
+            setOfficers(mappedUsers);
+          }
+          alert("Officer created successfully!");
+        } else {
+          alert("Failed to create officer: " + data.error);
+        }
+      } catch (err) {
+        console.error('Error creating user:', err);
+        alert("Failed to create officer due to a network error.");
+      }
     }
   };
 
-  const handleDeleteOfficer = (id) => {
+  const handleDeleteOfficer = async (id, rawId) => {
     if (window.confirm("Are you sure you want to delete this officer account?")) {
-      setOfficers(officers.filter(o => o.id !== id));
+      try {
+        if (rawId) {
+          await fetch(`/api?route=reject_user&id=${rawId}`, { method: 'DELETE' });
+        }
+        setOfficers(officers.filter(o => o.id !== id));
+      } catch (err) {
+        console.error('Error deleting user:', err);
+        alert('Failed to delete user.');
+      }
     }
   };
 
-  const { currentUser } = useAuth();
+  const handleSaveChanges = async () => {
+    localStorage.setItem('sentinai_profile', JSON.stringify(profileData));
+    localStorage.setItem('sentinai_toggles', JSON.stringify(toggles));
+    
+    if (currentUser?.id) {
+      try {
+        await fetch('/api?route=update_profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: currentUser.id,
+            firstName: profileData.firstName,
+            lastName: profileData.lastName,
+            phone: profileData.phone,
+            department: profileData.department,
+            designation: profileData.designation,
+            profilePhoto: profilePhoto
+          })
+        });
+      } catch (err) {
+        console.error('Failed to update profile to DB', err);
+      }
+    }
+
+    alert("Settings saved successfully!");
+  };
 
   const menuItems = [
     { name: 'Profile & Account', icon: <User className="w-4 h-4" /> },
@@ -178,11 +408,12 @@ const Settings = () => {
   ];
 
   const visibleMenuItems = menuItems.filter(item => {
+    const isAdmin = (currentUser?.role || '').toLowerCase() === 'admin';
     if (['User Management', 'Admin Controls', 'Audit Logs'].includes(item.name)) {
-      return currentUser?.role === 'Admin';
+      return isAdmin;
     }
     if (item.name === 'Other Users') {
-      return currentUser?.role !== 'Admin';
+      return !isAdmin;
     }
     return true;
   });
@@ -190,7 +421,7 @@ const Settings = () => {
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-[1600px] mx-auto flex flex-col h-full page-enter">
       <TopBar title="Settings" subtitle="Manage your account, system preferences and security settings">
-        <button onClick={() => alert("Settings saved successfully!")} className="flex items-center space-x-2 bg-[#4c1d95] hover:bg-[#5b21b6] text-white px-5 py-2 rounded-lg transition-colors text-sm font-medium shadow-lg">
+        <button onClick={handleSaveChanges} className="flex items-center space-x-2 bg-[#4c1d95] hover:bg-[#5b21b6] text-white px-5 py-2 rounded-lg transition-colors text-sm font-medium shadow-lg">
           <Check className="w-4 h-4" />
           <span>Save Changes</span>
         </button>
@@ -491,7 +722,7 @@ const Settings = () => {
                           </td>
                           <td className="p-4 text-right">
                             <button className="text-slate-400 hover:text-white mr-3">Edit</button>
-                            <button onClick={() => handleDeleteOfficer(officer.id)} className="text-slate-400 hover:text-rose-400">Delete</button>
+                            <button onClick={() => handleDeleteOfficer(officer.id, officer.rawId)} className="text-slate-400 hover:text-rose-400">Delete</button>
                           </td>
                         </tr>
                       ))}
@@ -640,9 +871,14 @@ const Settings = () => {
                   </h3>
                   <p className="text-sm text-slate-400">Manage administrative tasks, track priorities, and resolve pending issues.</p>
                 </div>
-                <button onClick={handleAddAdminTask} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs transition-colors flex items-center shadow-lg shadow-blue-500/20">
-                  <Plus className="w-3 h-3 mr-2" /> Add Task
-                </button>
+                <div className="flex space-x-3">
+                  <button onClick={refreshReports} className="bg-slate-800 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs transition-colors flex items-center border border-slate-700">
+                    <RefreshCw className="w-3 h-3 mr-2" /> Refresh
+                  </button>
+                  <button onClick={handleAddAdminTask} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs transition-colors flex items-center shadow-lg shadow-blue-500/20">
+                    <Plus className="w-3 h-3 mr-2" /> Add Task
+                  </button>
+                </div>
               </div>
               
               <div className="bg-[#0b1120] rounded-xl border border-slate-800 overflow-hidden">
@@ -725,7 +961,10 @@ const Settings = () => {
               <div className="bg-[#0b1120] rounded-xl border border-slate-800 overflow-hidden">
                 <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
                   <h4 className="font-medium text-sm text-white">System Events</h4>
-                  <button onClick={() => exportToCSV(auditLogs, 'system_audit_logs.csv')} className="text-xs text-slate-400 hover:text-white flex items-center"><Download className="w-3 h-3 mr-1"/> Export Log</button>
+                  <div className="flex space-x-3">
+                    <button onClick={handleClearLogs} className="text-xs text-rose-400 hover:text-rose-300 flex items-center transition-colors"><Trash2 className="w-3 h-3 mr-1"/> Clear All</button>
+                    <button onClick={() => exportToCSV(auditLogs, 'system_audit_logs.csv')} className="text-xs text-slate-400 hover:text-white flex items-center transition-colors"><Download className="w-3 h-3 mr-1"/> Export Log</button>
+                  </div>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm">
@@ -736,16 +975,26 @@ const Settings = () => {
                         <th className="p-4 font-medium">Action</th>
                         <th className="p-4 font-medium">IP Address</th>
                         <th className="p-4 font-medium">Status</th>
+                        <th className="p-4 font-medium w-10 text-center">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {auditLogs.map((log, idx) => (
                         <tr key={idx} className="hover:bg-slate-800/20 text-slate-300 transition-colors">
-                          <td className="p-4 whitespace-nowrap text-xs">{log.timestamp}</td>
-                          <td className="p-4 font-medium">{log.user}</td>
+                          <td className="p-4 whitespace-nowrap text-xs">{log.logTime || log.timestamp}</td>
+                          <td className="p-4 font-medium">{log.userName || log.user}</td>
                           <td className="p-4">{log.action}</td>
                           <td className="p-4 text-xs font-mono text-slate-500">{log.ip}</td>
                           <td className="p-4"><span className={`${log.status === 'Success' ? 'text-emerald-400' : 'text-rose-400'} text-xs`}>{log.status}</span></td>
+                          <td className="p-4 text-center">
+                            <button 
+                              onClick={() => handleDeleteLog(log.id || log.ROWID)}
+                              className="p-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded transition-colors group"
+                              title="Delete Log"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

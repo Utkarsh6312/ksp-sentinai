@@ -1,19 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
-  PieChart, Pie, Cell
-} from 'recharts';
+  MapContainer, TileLayer, CircleMarker, Popup, useMap, LayersControl 
+} from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 import { 
-  AlertTriangle, Download, Filter, Map, ChevronRight, CheckSquare, Square,
-  Info, Shield, Crosshair
+  MapPin, ShieldAlert, Crosshair, AlertTriangle, Layers, Filter, 
+  Search, Maximize2, Download, Activity, Radar, CheckSquare, Square, Shield
 } from 'lucide-react';
+import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Bar, PieChart, Pie, Cell } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import TopBar from './TopBar';
 import CrimeHeatmap from './Maps/CrimeHeatmap';
-import mockData from '../data/mockSchema.json';
+import { useData } from '../context/DataContext';
 import { exportToCSV } from '../utils/exportUtils';
 
 const HotspotMap = () => {
+  const { data: mockData, loading } = useData();
   const navigate = useNavigate();
   const [activeModal, setActiveModal] = useState(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
@@ -25,6 +27,15 @@ const HotspotMap = () => {
     'Traffic Incidents': false,
     'CCTV Coverage': true
   });
+  const [filters, setFilters] = useState({
+    timeRange: 'Last 24 Hours',
+    district: 'All'
+  });
+
+  if (loading || !mockData) {
+    return <div className="flex h-full items-center justify-center text-slate-400">Loading live database...</div>;
+  }
+  
   const [mapCenter, setMapCenter] = useState([12.9716, 77.5946]); // Bengaluru
 
   const getTimeData = () => {

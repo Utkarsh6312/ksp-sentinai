@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import App from './App.jsx'
 import { ReportsProvider } from './context/ReportsContext'
+import { DataProvider } from './context/DataContext'
 import './index.css'
 
 class ErrorBoundary extends React.Component {
@@ -36,11 +37,13 @@ class ErrorBoundary extends React.Component {
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <ReportsProvider>
-        <HashRouter>
-          <App />
-        </HashRouter>
-      </ReportsProvider>
+      <DataProvider>
+        <ReportsProvider>
+          <HashRouter>
+            <App />
+          </HashRouter>
+        </ReportsProvider>
+      </DataProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 )

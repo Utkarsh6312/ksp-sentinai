@@ -1,39 +1,57 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
+import { Shield, Lock, User, ArrowRight, Loader2, Mail, UserPlus, LogIn } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [role, setRole] = useState('admin');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    if (!username || !password) {
-      setError('Please enter both username and password.');
+    if (!username || !password || (!isLogin && !email)) {
+      setError('Please fill in all required fields.');
       setIsLoading(false);
       return;
     }
 
-    const result = await login(username, password);
-    if (result.success) {
-      navigate('/dashboard');
+    if (isLogin) {
+      const result = await login(username, password, role);
+      if (result.success) {
+        navigate('/');
+      } else {
+        setError(result.error);
+        setIsLoading(false);
+      }
     } else {
-      setError(result.error);
-      setIsLoading(false);
+      const result = await register(username, password, email, role);
+      if (result.success) {
+        setError('Account creation is pending admin approval.');
+        setIsLoading(false);
+        // Clear form fields
+        setUsername('');
+        setPassword('');
+        setEmail('');
+        // Switch back to login view after 3 seconds
+        setTimeout(() => {
+          setIsLogin(true);
+          setError('');
+        }, 3000);
+      } else {
+        setError(result.error);
+        setIsLoading(false);
+      }
     }
-  };
-
-  const handleDemoFill = (role) => {
-    setUsername(role);
-    setPassword(role);
   };
 
   return (
@@ -52,11 +70,76 @@ const Login = () => {
         </div>
 
         <div className="glass-panel p-8 rounded-2xl shadow-2xl border border-[#1e293b] animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-          <form onSubmit={handleLogin} className="space-y-6">
-            
+          
+          {/* Sign In / Sign Up Toggle */}
+          <div className="flex mb-6 bg-[#0b1120] rounded-lg p-1 border border-[#1e293b]">
+            <button
+              type="button"
+              className={`flex-1 py-2 text-sm font-bold rounded-md transition-colors flex items-center justify-center gap-2 ${isLogin ? 'bg-[#1e293b] text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+              onClick={() => { setIsLogin(true); setError(''); }}
+            >
+              <LogIn className="w-4 h-4" />
+              Sign In
+            </button>
+            <button
+              type="button"
+              className={`flex-1 py-2 text-sm font-bold rounded-md transition-colors flex items-center justify-center gap-2 ${!isLogin ? 'bg-[#1e293b] text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+              onClick={() => { setIsLogin(false); setError(''); }}
+            >
+              <UserPlus className="w-4 h-4" />
+              Create Account
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-3 rounded-lg text-sm text-center">
                 {error}
+              </div>
+            )}
+
+            {/* Role Selection */}
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Role</label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="admin"
+                    checked={role === 'admin'}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-4 h-4 text-[#a855f7] bg-[#0b1120] border-[#1e293b] focus:ring-[#a855f7] focus:ring-offset-[#0b1120]"
+                  />
+                  <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Admin</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="role"
+                    value="investigator"
+                    checked={role === 'investigator'}
+                    onChange={(e) => setRole(e.target.value)}
+                    className="w-4 h-4 text-[#a855f7] bg-[#0b1120] border-[#1e293b] focus:ring-[#a855f7] focus:ring-offset-[#0b1120]"
+                  />
+                  <span className="text-sm text-slate-300 group-hover:text-white transition-colors">Investigator</span>
+                </label>
+              </div>
+            </div>
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                  <input 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="w-full bg-[#0b1120] border border-[#1e293b] text-slate-200 rounded-lg pl-10 pr-4 py-3 focus:outline-none focus:border-[#a855f7] transition-colors"
+                  />
+                </div>
               </div>
             )}
 
@@ -97,29 +180,12 @@ const Login = () => {
                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
                 <>
-                  <span>Sign In to Terminal</span>
+                  <span>{isLogin ? 'Sign In to Terminal' : 'Create Account'}</span>
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
           </form>
-        </div>
-
-        {/* Demo Helper for Datathon */}
-        <div className="mt-8 text-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest mb-3">Datathon Demo Accounts</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            <button onClick={() => handleDemoFill('admin')} className="text-xs bg-[#1e293b] hover:bg-[#334155] border border-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors">
-              Admin
-            </button>
-            <button onClick={() => handleDemoFill('investigator')} className="text-xs bg-[#1e293b] hover:bg-[#334155] border border-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors">
-              Investigator
-            </button>
-            <button onClick={() => handleDemoFill('analyst')} className="text-xs bg-[#1e293b] hover:bg-[#334155] border border-slate-700 text-slate-300 px-3 py-1.5 rounded transition-colors">
-              Analyst
-            </button>
-          </div>
-          <p className="text-[10px] text-slate-500 mt-3">Click a role to auto-fill credentials.</p>
         </div>
       </div>
     </div>

@@ -7,10 +7,18 @@ export default defineConfig({
   base: './',
   server: {
     proxy: {
+      '/api': {
+        target: 'https://ksp-sentinai-60076496338.development.catalystserverless.in',
+        changeOrigin: true
+      },
       '/catalyst-api': {
         target: 'https://ksp-sentinai-60076496338.development.catalystserverless.in',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/catalyst-api/, '')
+      },
+      '/server': {
+        target: 'http://127.0.0.1:3000',
+        changeOrigin: true
       }
     }
   }

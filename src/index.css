@@ -253,3 +253,20 @@ body.light-mode .sidebar-link:hover:not(.sidebar-link-active) svg {
   left: 10px;
   top: -10px;
 }
+
+/* Hide Google Translate top banner */
+body {
+  top: 0px !important; 
+  position: static !important;
+}
+.goog-te-banner-frame {
+  display: none !important;
+}
+#goog-gt-tt {
+  display: none !important;
+  visibility: hidden !important;
+}
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}

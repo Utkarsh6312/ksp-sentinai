@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Popup, CircleMarker, Marker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import mockData from '../../data/mockSchema.json';
+import { useData } from '../../context/DataContext';
 
 const createHeatmapIcon = (riskLevel, name) => {
   return L.divIcon({
@@ -16,7 +16,15 @@ const createHeatmapIcon = (riskLevel, name) => {
   });
 };
 
-const CrimeHeatmap = ({ theme, data = mockData.CaseMaster, hotspots = [], center = [14.0, 75.5], zoom = 6 }) => {
+const CrimeHeatmap = ({ theme, data, hotspots = [], center = [14.0, 75.5], zoom = 6 }) => {
+  const { data: mockData, loading } = useData();
+  
+  const displayData = data || (mockData ? mockData.CaseMaster : []);
+
+  if (loading || !mockData) {
+    return <div className="flex h-full items-center justify-center text-slate-400">Loading map...</div>;
+  }
+
   const tileUrl = theme === 'dark' 
     ? "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
     : "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}";
@@ -38,7 +46,7 @@ const CrimeHeatmap = ({ theme, data = mockData.CaseMaster, hotspots = [], center
             />
           ))
         ) : (
-          data.map((caseItem) => {
+          displayData.map((caseItem) => {
             const isHeinous = caseItem.GravityOffenceID === 1;
             const color = isHeinous ? '#e11d48' : '#f59e0b';
             return (

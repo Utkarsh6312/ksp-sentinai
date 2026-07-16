@@ -11,7 +11,8 @@ import {
   FileText, 
   Settings, 
   Shield, 
-  LogOut
+  LogOut,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -25,19 +26,19 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   };
 
   const menuItems = [
-    { name: 'Command Centre', path: '/', icon: <LayoutDashboard className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'AI Chatbot', path: '/ai-copilot', icon: <MessageSquareText className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Dashboard', path: '/dashboard', icon: <BarChart3 className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Crime Analytics', path: '/analytics', icon: <BarChart3 className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Hotspot Map', path: '/hotspots', icon: <MapPin className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Suspect Network', path: '/network', icon: <Network className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Recent Offenders', path: '/offenders', icon: <Users className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Alerts & Notifications', path: '/alerts', icon: <BellRing className="w-5 h-5" />, badge: 7, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Reports', path: '/reports', icon: <FileText className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
-    { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5" />, roles: ['Admin', 'Investigator', 'Analyst'] },
+    { name: 'Command Centre', path: '/', icon: <LayoutDashboard className="w-5 h-5" />, roles: ['Admin', 'Investigator'] },
+    { name: 'AI Chatbot', path: '/ai-copilot', icon: <MessageSquareText className="w-5 h-5" />, roles: ['Admin', 'Investigator'] },
+    { name: 'Hotspot Map', path: '/hotspots', icon: <MapPin className="w-5 h-5" />, roles: ['Admin', 'Investigator'] },
+    { name: 'Suspect Network', path: '/network', icon: <Network className="w-5 h-5" />, roles: ['Admin', 'Investigator'] },
+    { name: 'Recent Offenders', path: '/offenders', icon: <Users className="w-5 h-5" />, roles: ['Admin', 'Investigator'] },
+    { name: 'Reports', path: '/reports', icon: <FileText className="w-5 h-5" />, roles: ['Admin', 'Investigator'] },
+    { name: 'Approvals', path: '/approvals', icon: <UserCheck className="w-5 h-5" />, roles: ['Admin'] },
+    { name: 'Settings', path: '/settings', icon: <Settings className="w-5 h-5" />, roles: ['Admin', 'Investigator'] },
   ];
 
-  const visibleMenuItems = menuItems.filter(item => item.roles.includes(currentUser?.role || 'Analyst'));
+  const visibleMenuItems = menuItems.filter(item => 
+    item.roles.some(r => r.toLowerCase() === (currentUser?.role || 'Investigator').toLowerCase())
+  );
 
   return (
     <>

@@ -5,12 +5,13 @@ import {
 } from 'recharts';
 import { 
   FileText, CheckCircle, Search, ChevronDown, Download, Filter, Eye,
-  AlertTriangle, ShieldAlert, Plus, UserPlus, FileOutput, UploadCloud, MapPin
+  AlertTriangle, ShieldAlert, Plus, UserPlus, FileOutput, UploadCloud, MapPin, FileBarChart
 } from 'lucide-react';
 import TopBar from './TopBar';
 import { exportToCSV } from '../utils/exportUtils';
 import { useReports } from '../context/ReportsContext';
 import { useAuth } from '../context/AuthContext';
+import Papa from 'papaparse';
 
 const Reports = () => {
   const [activeTab, setActiveTab] = useState('My Reports');
@@ -28,7 +29,7 @@ const Reports = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
-  const { reports: reportsData, setReports } = useReports();
+  const { reports: reportsData, setReports, addReport } = useReports();
   const { currentUser } = useAuth();
 
   const kpis = [
@@ -74,7 +75,37 @@ const Reports = () => {
   const handleExcelUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      alert(`Successfully uploaded ${file.name}. Data is being processed and stored in the database.`);
+      Papa.parse(file, {
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: async (results) => {
+          if (results.data && results.data.length > 0) {
+            let successCount = 0;
+            for (let row of results.data) {
+              const mappedData = {
+                reportId: row.reportId || row.id || 'N/A',
+                title: row.title || 'Untitled',
+                category: row.category || 'Uncategorized',
+                priority: row.reportPriority || row.priority || 'Low',
+                status: row.status || 'Pending Review',
+                reporter: row.reportedBy || row.reporter || 'Unknown',
+                assigned: row.assignedTo || row.assigned || 'Unassigned',
+                reportDate: row.reportDate || row.date || new Date().toISOString()
+              };
+              await addReport(mappedData);
+              successCount++;
+            }
+            alert(`Successfully parsed and uploaded ${successCount} reports to the database!`);
+          } else {
+            alert('The uploaded file appears to be empty or improperly formatted.');
+          }
+        },
+        error: (err) => {
+          console.error("CSV Parse Error:", err);
+          alert('Error parsing the file.');
+        }
+      });
       // Reset input value so same file can be uploaded again if needed
       e.target.value = null;
     }
@@ -91,11 +122,11 @@ const Reports = () => {
 
   const filteredAndSortedReports = useMemo(() => {
     let result = reportsData.filter(r => 
-      (statusFilter === 'All Status' || r.status === statusFilter || (statusFilter === 'Pending' && r.status.includes('Pending'))) &&
-      (r.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.reporter.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.category.toLowerCase().includes(searchQuery.toLowerCase()))
+      (statusFilter === 'All Status' || r.status === statusFilter || (statusFilter === 'Pending' && r.status?.includes('Pending'))) &&
+      ((r.id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.reporter || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.category || '').toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
     result.sort((a, b) => {
@@ -113,7 +144,7 @@ const Reports = () => {
     });
 
     return result;
-  }, [searchQuery, sortField, sortDirection, statusFilter]);
+  }, [reportsData, searchQuery, sortField, sortDirection, statusFilter]);
 
   const ITEMS_PER_PAGE = 8;
   const totalPages = Math.ceil(filteredAndSortedReports.length / ITEMS_PER_PAGE) || 1;
@@ -161,8 +192,6 @@ const Reports = () => {
           <Download className="w-4 h-4" />
           <span className="hidden sm:inline">Export</span>
         </button>
-        {currentUser?.role !== 'Analyst' && (
-          <>
             <div className="relative overflow-hidden ml-2 md:ml-3">
               <button className="flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-500 text-white px-3 md:px-4 py-2 rounded-lg transition-colors text-sm font-medium border border-emerald-500 h-full w-full">
                 <UploadCloud className="w-4 h-4" />
@@ -179,8 +208,6 @@ const Reports = () => {
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Create</span>
             </button>
-          </>
-        )}
       </TopBar>
 
       {/* KPI Grid */}
@@ -293,7 +320,7 @@ const Reports = () => {
                           <span className={`w-1.5 h-1.5 rounded-full ${
                             report.status === 'Resolved' ? 'bg-emerald-500' :
                             report.status === 'In Progress' ? 'bg-blue-500' :
-                            report.status.includes('Pending') ? 'bg-amber-500' :
+                            report.status?.includes('Pending') ? 'bg-amber-500' :
                             report.status === 'Closed' ? 'bg-slate-500' :
                             'bg-rose-500'
                           }`}></span>
@@ -482,8 +509,6 @@ const Reports = () => {
           <div className="glass-panel p-5 rounded-xl">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Quick Actions</h3>
             <div className="flex justify-between">
-              {currentUser?.role !== 'Analyst' && (
-                <>
                   <div onClick={() => setShowCreateReportModal(true)} className="flex flex-col items-center cursor-pointer group">
                     <div className="bg-blue-500/10 p-3 rounded-xl mb-2 group-hover:scale-110 transition-transform">
                       <Plus className="w-5 h-5 text-blue-400" />
@@ -496,8 +521,6 @@ const Reports = () => {
                     </div>
                     <span className="text-[9px] text-slate-400 text-center max-w-[50px] leading-tight group-hover:text-slate-200">Assign Report</span>
                   </div>
-                </>
-              )}
               <div onClick={() => alert("Generating Report")} className="flex flex-col items-center cursor-pointer group">
                 <div className="bg-amber-500/10 p-3 rounded-xl mb-2 group-hover:scale-110 transition-transform">
                   <FileOutput className="w-5 h-5 text-amber-400" />
@@ -538,8 +561,11 @@ const Reports = () => {
                     {report.type === 'pdf' && <FileText className="w-4 h-4 text-rose-500 mr-3" />}
                     {report.type === 'excel' && <FileBarChart className="w-4 h-4 text-emerald-500 mr-3" />}
                     {report.type === 'doc' && <FileText className="w-4 h-4 text-blue-500 mr-3" />}
+                    {['high', 'critical'].includes(report.type) && <AlertTriangle className="w-4 h-4 text-rose-500 mr-3" />}
+                    {['medium'].includes(report.type) && <AlertTriangle className="w-4 h-4 text-amber-500 mr-3" />}
+                    {['info', 'low'].includes(report.type) && <AlertTriangle className="w-4 h-4 text-blue-500 mr-3" />}
                     <div>
-                      <p className="text-[10px] text-slate-300">{report.title}</p>
+                      <p className="text-[10px] text-slate-300">{report.title || report.text}</p>
                       <p className="text-[9px] text-slate-500">{report.time}</p>
                     </div>
                   </div>
@@ -585,7 +611,7 @@ const Reports = () => {
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
                     selectedReport.status === 'Resolved' ? 'text-emerald-500 border-emerald-500/30 bg-emerald-500/10' :
                     selectedReport.status === 'In Progress' ? 'text-blue-500 border-blue-500/30 bg-blue-500/10' :
-                    selectedReport.status.includes('Pending') ? 'text-amber-500 border-amber-500/30 bg-amber-500/10' :
+                    selectedReport.status?.includes('Pending') ? 'text-amber-500 border-amber-500/30 bg-amber-500/10' :
                     'text-rose-500 border-rose-500/30 bg-rose-500/10'
                   }`}>{selectedReport.status}</span>
                 </div>

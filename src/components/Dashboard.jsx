@@ -1,24 +1,30 @@
 import React, { useState, useMemo } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell
+  PieChart, Pie, Cell, BarChart, Bar
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, Users, ShieldAlert, AlertTriangle, FileCheck, Clock,
   ChevronDown, Filter, Download, ArrowUpRight, ArrowDownRight,
-  Plus, Search, Map, FileOutput, UploadCloud, Calendar, X
+  Plus, Search, Map, FileOutput, UploadCloud, Calendar, X,
+  TrendingUp, Target, Shield
 } from 'lucide-react';
 import TopBar from './TopBar';
 import CrimeHeatmap from './Maps/CrimeHeatmap';
-import mockData from '../data/mockSchema.json';
+import { useData } from '../context/DataContext';
 import { exportToCSV } from '../utils/exportUtils';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { data: mockData, loading } = useData();
   const [timeFilter, setTimeFilter] = useState('Last 7 Days');
   const [activeModal, setActiveModal] = useState(null);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+
+  if (loading || !mockData) {
+    return <div className="flex h-full items-center justify-center text-slate-400">Loading live database...</div>;
+  }
 
   // KPI Data
   const kpis = [
@@ -81,6 +87,15 @@ const Dashboard = () => {
     { id: 3, name: 'Hubballi PS', district: 'Dharwad', cases: 156, trend: '+ 9%', isUp: true, color: 'bg-blue-500' },
     { id: 4, name: 'Davangere PS', district: 'Davangere', cases: 142, trend: '- 5%', isUp: false, color: 'bg-purple-500' },
     { id: 5, name: 'Tumakuru PS', district: 'Tumakuru', cases: 130, trend: '+ 7%', isUp: true, color: 'bg-cyan-500' },
+  ];
+
+  const districtData = [
+    { name: 'Bengaluru Urban', value: 436 },
+    { name: 'Mysuru', value: 298 },
+    { name: 'Davanagere', value: 210 },
+    { name: 'Hubballi Dharwad', value: 184 },
+    { name: 'Tumakuru', value: 153 },
+    { name: 'Belagavi', value: 98 },
   ];
 
   const alerts = [
@@ -330,55 +345,59 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Very Bottom: Weekly Summary & Quick Actions */}
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Weekly Summary */}
-        <div className="glass-panel p-5 rounded-xl flex-1 flex flex-col md:flex-row md:items-center justify-between">
-          <div className="flex items-center mb-4 md:mb-0">
-            <Calendar className="w-5 h-5 text-[#a855f7] mr-2" />
-            <h3 className="text-sm font-semibold text-white">Weekly Summary</h3>
+
+
+      {/* --- Advanced Analytics Section (Appended from Crime Analytics) --- */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Top Districts by Volume */}
+        <div className="glass-panel p-5 rounded-xl flex flex-col">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-sm font-semibold text-white">Top Districts by Volume</h3>
           </div>
-          <div className="flex flex-wrap items-center gap-4 md:gap-8 mt-2 md:mt-0">
-            <div className="w-[45%] md:w-auto">
-              <p className="text-[10px] text-slate-400 mb-1 uppercase">Total FIRs</p>
-              <p className="text-lg font-bold text-white">1,843</p>
-              <p className="text-[10px] text-emerald-500 flex items-center mt-0.5"><ArrowUpRight className="w-2.5 h-2.5 mr-0.5"/> 14.2%</p>
-            </div>
-            <div className="w-[45%] md:w-auto">
-              <p className="text-[10px] text-slate-400 mb-1 uppercase">Total Arrests</p>
-              <p className="text-lg font-bold text-white">2,154</p>
-              <p className="text-[10px] text-emerald-500 flex items-center mt-0.5"><ArrowUpRight className="w-2.5 h-2.5 mr-0.5"/> 8.3%</p>
-            </div>
-            <div className="w-[45%] md:w-auto">
-              <p className="text-[10px] text-slate-400 mb-1 uppercase">Heinous Crimes</p>
-              <p className="text-lg font-bold text-white">320</p>
-              <p className="text-[10px] text-rose-500 flex items-center mt-0.5"><ArrowUpRight className="w-2.5 h-2.5 mr-0.5"/> 5.6%</p>
-            </div>
-            <div className="w-[45%] md:w-auto">
-              <p className="text-[10px] text-slate-400 mb-1 uppercase">Charge Sheets</p>
-              <p className="text-lg font-bold text-white">1,294</p>
-              <p className="text-[10px] text-emerald-500 flex items-center mt-0.5"><ArrowUpRight className="w-2.5 h-2.5 mr-0.5"/> 11.7%</p>
-            </div>
-            <div className="w-[45%] md:w-auto">
-              <p className="text-[10px] text-slate-400 mb-1 uppercase">Conviction Rate</p>
-              <p className="text-lg font-bold text-white">41%</p>
-              <p className="text-[10px] text-emerald-500 flex items-center mt-0.5"><ArrowUpRight className="w-2.5 h-2.5 mr-0.5"/> 2.1%</p>
-            </div>
+          <div className="flex-1 min-h-[180px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={districtData} layout="vertical" margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={10} axisLine={false} tickLine={false} width={100} />
+                <Tooltip cursor={{ fill: '#1e293b' }} contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b' }} />
+                <Bar dataKey="value" fill="#a855f7" radius={[0, 4, 4, 0]} barSize={12}>
+                  {districtData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={index === 0 ? '#ef4444' : index === 1 ? '#f59e0b' : '#3b82f6'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="glass-panel p-5 rounded-xl lg:w-1/3">
-          <h3 className="text-sm font-semibold text-white mb-4">Quick Actions</h3>
-          <div className="flex flex-wrap justify-between gap-4">
-            {quickActions.map((action, idx) => (
-              <div key={idx} onClick={() => handleActionClick(action.id)} className="flex flex-col items-center cursor-pointer group">
-                <div className={`${action.bg} p-3 rounded-xl mb-2 group-hover:scale-110 transition-transform`}>
-                  {action.icon}
-                </div>
-                <span className="text-[9px] text-slate-400 text-center max-w-[50px] leading-tight group-hover:text-slate-200">{action.label}</span>
+        {/* Crime by Time of Day */}
+        <div className="glass-panel p-5 rounded-xl">
+          <div className="flex justify-between items-center mb-1">
+            <h3 className="text-sm font-semibold text-white">Crime by Time of Day</h3>
+          </div>
+          <p className="text-xs text-slate-400 mb-4">Higher intensity shows more crimes</p>
+          <div className="flex h-[180px]">
+            <div className="flex flex-col justify-between text-[9px] text-slate-500 pr-2 pb-6 pt-1">
+              <span>12 AM</span><span>4 AM</span><span>8 AM</span><span>12 PM</span><span>4 PM</span><span>8 PM</span>
+            </div>
+            <div className="flex-1 flex flex-col">
+              <div className="flex-1 grid grid-cols-7 gap-1 bg-[#0b1120] p-1 rounded-lg border border-[#1e293b]">
+                {Array.from({ length: 7 }).map((_, col) => (
+                  <div key={col} className="flex flex-col gap-1">
+                    {Array.from({ length: 6 }).map((_, row) => {
+                      let color = 'bg-[#1e293b]';
+                      if (row > 3 && col < 5) color = 'bg-rose-500/80'; 
+                      else if (row === 2) color = 'bg-amber-500/80';
+                      else if (row === 4) color = 'bg-[#a855f7]/80';
+                      return <div key={`${col}-${row}`} className={`flex-1 rounded-sm ${color}`}></div>;
+                    })}
+                  </div>
+                ))}
               </div>
-            ))}
+              <div className="grid grid-cols-7 gap-1 mt-2 text-center text-[9px] text-slate-500">
+                <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -8,12 +8,11 @@ import NetworkGraph from './components/NetworkGraph';
 import PredictiveAnalytics from './components/PredictiveAnalytics';
 import Offenders from './components/Offenders';
 
-import CrimeAnalytics from './components/CrimeAnalytics';
 import HotspotMap from './components/HotspotMap';
-import Alerts from './components/Alerts';
 import Reports from './components/Reports';
 import Settings from './components/Settings';
 import Login from './components/Login';
+import AdminApprovals from './components/AdminApprovals';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const AuthenticatedLayout = () => {
@@ -121,14 +120,12 @@ function App() {
         {/* Protected Routes */}
         <Route element={<AuthenticatedLayout />}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/ai-copilot" element={<Chatbot />} />
-          <Route path="/analytics" element={<CrimeAnalytics />} />
           <Route path="/hotspots" element={<HotspotMap />} />
           <Route path="/network" element={<NetworkGraph />} />
           <Route path="/offenders" element={<Offenders />} />
-          <Route path="/alerts" element={<Alerts />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/approvals" element={<AdminApprovals />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>

@@ -7,10 +7,66 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+      /* Nuclear option to hide Google Translate Banner */
+      body {
+        top: 0 !important;
+        position: static !important;
+      }
+      iframe {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
+      div[id^="goog"]:not(#google_translate_element) {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+      }
+      .goog-te-banner-frame,
+      .goog-te-menu-frame,
+      .VIpgJd-Zvi9od-aZ2wEe-wOHMyf {
+        display: none !important;
+      }
+      .goog-text-highlight {
+        background: none !important;
+        box-shadow: none !important;
+      }
+    </style>
     <title>SentinAI - KSP Command Center</title>
   </head>
   <body>
     <div id="root"></div>
+    <div id="google_translate_element" style="display:none;"></div>
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'kn', autoDisplay: false}, 'google_translate_element');
+      }
+      
+      // Indestructible Nuclear Hide for Google Translate Elements
+      setInterval(function() {
+        // Nuke all iframes
+        var frames = document.getElementsByTagName('iframe');
+        for (var i = 0; i < frames.length; i++) {
+          frames[i].style.setProperty('display', 'none', 'important');
+          frames[i].style.setProperty('visibility', 'hidden', 'important');
+        }
+        
+        // Nuke all google UI divs
+        var divs = document.getElementsByTagName('div');
+        for (var j = 0; j < divs.length; j++) {
+          if (divs[j].id && divs[j].id.indexOf('goog') === 0 && divs[j].id !== 'google_translate_element') {
+            divs[j].style.setProperty('display', 'none', 'important');
+          }
+        }
+        
+        // Reset body offset
+        if (document.body && document.body.style.top) {
+          document.body.style.setProperty('top', '0px', 'important');
+        }
+      }, 50);
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
